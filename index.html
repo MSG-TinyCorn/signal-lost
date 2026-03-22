@@ -685,9 +685,15 @@ if(urlP.get('cancelled')==='true'){showFlash('PURCHASE CANCELLED');window.histor
 
 // ─── SOUND ENGINE ─────────────────────────────────────────
 const AC = new (window.AudioContext || window.webkitAudioContext)();
-function resumeAC(){ if(AC.state==='suspended') AC.resume(); }
-document.addEventListener('keydown', resumeAC, {once:true});
-document.addEventListener('click', resumeAC, {once:true});
+function resumeAC(){
+  if(AC.state==='suspended'||AC.state==='interrupted') AC.resume();
+}
+// Resume on ANY interaction immediately
+['keydown','mousedown','touchstart','pointerdown'].forEach(ev=>{
+  document.addEventListener(ev, resumeAC);
+});
+// Also try to resume right away
+resumeAC();
 
 function beep(freq, type, duration, vol, fade){
   try{
