@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIGNAL LOST — STATION BREACH</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --p:#df00ff;--pb:#aa00cc;--pd:#4a0080;--pk:#0d0020;
+  --pl:rgba(223,0,255,0.15);--red:#ff2255;--cyan:#00ffee;--gold:#ffd700;
+  --glow:0 0 12px #df00ff,0 0 32px rgba(223,0,255,0.6);
+}
+body{background:#060010;color:var(--p);font-family:'Share Tech Mono',monospace;display:flex;align-items:center;justify-content:center;min-height:100vh;overflow:hidden;user-select:none;}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(transparent 0px,transparent 3px,rgba(0,0,0,0.12) 3px,rgba(0,0,0,0.12) 4px);pointer-events:none;z-index:999;}
+#game-shell{display:flex;width:860px;height:570px;border:1px solid var(--pd);box-shadow:0 0 60px rgba(223,0,255,0.15),inset 0 0 60px rgba(0,0,0,0.3);position:relative;}
+
+/* LEFT */
+#left-panel{width:130px;background:#0a0018;border-right:1px solid var(--pd);display:flex;flex-direction:column;padding:14px 10px;flex-shrink:0;}
+#game-title{font-family:'Orbitron',monospace;font-size:14px;font-weight:700;color:var(--p);text-shadow:var(--glow);letter-spacing:2px;line-height:1.3;margin-bottom:3px;text-align:center;}
+#game-subtitle{font-size:8px;color:var(--pd);letter-spacing:3px;text-align:center;margin-bottom:16px;}
+.stat-block{margin-bottom:11px;}
+.stat-label{font-size:8px;color:var(--pb);letter-spacing:3px;margin-bottom:1px;}
+.stat-val{font-family:'Orbitron',monospace;font-size:24px;font-weight:700;color:#ffffff;text-shadow:var(--glow);line-height:1;}
+.stat-val.sm{font-size:16px;}
+.coin-block{margin-bottom:11px;border:1px solid var(--pd);padding:7px;background:#080015;}
+.coin-label{font-size:8px;color:var(--gold);letter-spacing:2px;margin-bottom:2px;}
+.coin-val{font-family:'Orbitron',monospace;font-size:20px;font-weight:700;color:var(--gold);text-shadow:0 0 10px var(--gold);line-height:1;}
+#prog-label{font-size:8px;color:var(--pb);letter-spacing:2px;margin-top:6px;margin-bottom:4px;}
+#prog-wrap{width:100%;height:70px;background:#080015;border:1px solid var(--pd);position:relative;overflow:hidden;}
+#prog-fill{position:absolute;bottom:0;left:0;width:100%;background:linear-gradient(to top,var(--pb),var(--p));box-shadow:0 0 12px var(--p);transition:height 0.15s;height:0%;}
+#prog-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:14px;color:rgba(223,0,255,0.5);}
+.left-btn{margin-top:6px;font-family:'Orbitron',monospace;font-size:8px;font-weight:700;color:#000;background:var(--p);border:none;padding:7px 4px;cursor:pointer;letter-spacing:1px;transition:background 0.1s;width:100%;}
+.left-btn:hover{background:#fff;}
+.left-btn.gold-btn{background:var(--gold);color:#000;}
+.left-btn.gold-btn:hover{background:#fff;}
+
+/* CENTER */
+#center-panel{flex:1;display:flex;flex-direction:column;background:#060010;position:relative;overflow:hidden;}
+canvas{display:block;width:100%;flex:1;}
+#key-row{display:flex;justify-content:space-around;align-items:center;padding:7px 10px;background:#09001a;border-top:1px solid var(--pd);flex-shrink:0;}
+.key-slot{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.key-box{width:52px;height:52px;border:2px solid var(--pd);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:18px;font-weight:700;color:var(--pb);background:#0d0020;transition:all 0.06s;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);}
+.key-box.active{border-color:var(--p);color:#fff;background:var(--pd);box-shadow:var(--glow);transform:scale(0.88);}
+.key-box.correct{border-color:#00ff88;color:#00ff88;background:#001a0d;box-shadow:0 0 18px #00ff88;}
+.key-box.wrong{border-color:var(--red);color:var(--red);background:#1a0008;box-shadow:0 0 18px var(--red);}
+.key-label{font-size:7px;color:var(--pd);letter-spacing:1px;}
+
+/* RIGHT */
+#right-panel{width:130px;background:#0a0018;border-left:1px solid var(--pd);display:flex;flex-direction:column;padding:14px 10px;flex-shrink:0;}
+#right-title{font-size:8px;color:var(--pb);letter-spacing:3px;margin-bottom:8px;text-align:center;}
+#alert-log{flex:1;overflow:hidden;display:flex;flex-direction:column;gap:4px;}
+.alert-entry{font-size:9px;color:var(--pb);letter-spacing:0.5px;line-height:1.4;border-left:2px solid var(--pd);padding-left:5px;}
+.alert-entry.danger{color:#ff4466;border-color:#ff4466;}
+.alert-entry.good{color:#00ff88;border-color:#00ff88;}
+.alert-entry.gold{color:var(--gold);border-color:var(--gold);}
+#reactor-label{font-size:8px;color:var(--pb);letter-spacing:2px;margin-top:10px;margin-bottom:4px;}
+#reactor-wrap{width:100%;height:10px;background:#080015;border:1px solid var(--pd);}
+#reactor-fill{height:100%;background:var(--p);box-shadow:0 0 8px var(--p);transition:width 0.2s,background 0.3s;width:100%;}
+
+/* OVERLAYS */
+.overlay{position:absolute;inset:0;background:rgba(4,0,12,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:500;padding:20px;}
+.overlay h1{font-family:'Orbitron',monospace;font-size:36px;font-weight:700;color:var(--p);text-shadow:var(--glow);letter-spacing:4px;line-height:1.1;margin-bottom:6px;text-align:center;}
+.overlay h2{font-family:'Orbitron',monospace;font-size:16px;color:var(--pb);letter-spacing:3px;margin-bottom:16px;text-align:center;}
+.overlay p{color:var(--pb);font-size:11px;letter-spacing:1px;line-height:2;text-align:center;margin-bottom:14px;}
+.big-btn{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;color:#000;background:var(--p);border:none;padding:10px 28px;cursor:pointer;letter-spacing:3px;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);margin:4px;transition:background 0.1s,transform 0.1s;}
+.big-btn:hover{background:#fff;transform:scale(1.04);}
+.big-btn.sec{background:transparent;color:var(--p);border:1px solid var(--pd);clip-path:none;font-size:9px;}
+.big-btn.sec:hover{background:var(--pl);color:#fff;}
+.big-btn.gold{background:var(--gold);color:#000;}
+.big-btn.gold:hover{background:#fff;}
+.blink{animation:blink 1s step-end infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* TUTORIAL */
+#tutorial-screen{position:absolute;inset:0;background:rgba(4,0,12,0.97);display:none;flex-direction:column;align-items:center;justify-content:flex-start;z-index:500;padding:14px;overflow-y:auto;}
+#tutorial-screen h1{font-family:'Orbitron',monospace;font-size:20px;font-weight:700;color:var(--p);text-shadow:var(--glow);letter-spacing:4px;margin-bottom:12px;text-align:center;flex-shrink:0;}
+.tut-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;width:100%;margin-bottom:12px;}
+.tut-card{border:1px solid var(--pd);padding:9px 11px;background:#0a0018;}
+.tut-title{font-family:'Orbitron',monospace;font-size:9px;font-weight:700;letter-spacing:2px;margin-bottom:5px;}
+.tut-body{font-size:10px;color:var(--pb);line-height:1.7;}
+
+/* COIN SHOP */
+#coin-shop-modal{position:absolute;inset:0;background:rgba(4,0,12,0.97);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:600;padding:16px;overflow-y:auto;}
+#coin-shop-modal h1{font-family:'Orbitron',monospace;font-size:22px;font-weight:700;color:var(--gold);text-shadow:0 0 12px var(--gold);letter-spacing:4px;margin-bottom:4px;text-align:center;}
+.coin-shop-sub{color:#aa8800;font-size:9px;letter-spacing:3px;margin-bottom:16px;}
+.coin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;max-width:580px;margin-bottom:16px;}
+.coin-card{border:1px solid #4a3800;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;background:#0f0a00;transition:border-color 0.15s;}
+.coin-card:hover{border-color:var(--gold);}
+.coin-amount{font-family:'Orbitron',monospace;font-size:22px;font-weight:700;color:var(--gold);text-shadow:0 0 10px var(--gold);}
+.coin-bonus{font-size:9px;color:#aa8800;letter-spacing:1px;min-height:14px;}
+.coin-price{font-size:11px;color:#fff;font-family:'Orbitron',monospace;}
+.coin-buy-btn{font-family:'Orbitron',monospace;font-size:8px;font-weight:700;background:var(--gold);color:#000;border:none;padding:5px 10px;cursor:pointer;letter-spacing:1px;width:100%;transition:background 0.1s;}
+.coin-buy-btn:hover{background:#fff;}
+.modal-close{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--pb);background:transparent;border:1px solid var(--pd);padding:7px 22px;cursor:pointer;letter-spacing:2px;}
+.modal-close:hover{border-color:var(--p);color:var(--p);}
+
+/* SKINS SHOP */
+#skin-shop-modal{position:absolute;inset:0;background:rgba(4,0,12,0.97);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:600;padding:16px;overflow-y:auto;}
+#skin-shop-modal h1{font-family:'Orbitron',monospace;font-size:22px;font-weight:700;color:var(--p);text-shadow:var(--glow);letter-spacing:4px;margin-bottom:4px;text-align:center;}
+.skin-shop-sub{color:var(--pb);font-size:9px;letter-spacing:3px;margin-bottom:16px;}
+.skin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:600px;margin-bottom:16px;}
+.skin-card{border:2px solid var(--pd);padding:12px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;background:#0a0018;transition:border-color 0.15s;cursor:pointer;}
+.skin-card:hover{border-color:var(--p);}
+.skin-card.owned{border-color:var(--pb);}
+.skin-card.equipped{border-color:#fff;box-shadow:0 0 12px var(--p);}
+.skin-preview{width:100%;height:60px;display:flex;align-items:center;justify-content:center;}
+.skin-name{font-family:'Orbitron',monospace;font-size:8px;font-weight:700;color:var(--p);letter-spacing:1px;text-align:center;}
+.skin-cost{font-size:10px;color:var(--gold);font-family:'Orbitron',monospace;}
+.skin-status{font-size:8px;letter-spacing:1px;}
+.skin-action-btn{font-family:'Orbitron',monospace;font-size:8px;font-weight:700;background:var(--p);color:#000;border:none;padding:4px 8px;cursor:pointer;letter-spacing:1px;width:100%;transition:background 0.1s;}
+.skin-action-btn:hover{background:#fff;}
+.skin-action-btn.equip{background:var(--pb);}
+.skin-action-btn.equipped-btn{background:#333;color:#666;cursor:default;}
+
+#flash{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:var(--p);color:#000;font-family:'Orbitron',monospace;font-size:11px;font-weight:700;padding:5px 18px;letter-spacing:2px;z-index:700;pointer-events:none;opacity:0;transition:opacity 0.2s;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);white-space:nowrap;}
+</style>
+</head>
+<body>
+<div id="game-shell">
+  <div id="left-panel">
+    <div id="game-title">SIGNAL<br>LOST</div>
+    <div id="game-subtitle">Station Breach</div>
+    <div class="stat-block"><div class="stat-label">SCORE</div><div class="stat-val" id="score-disp">0</div></div>
+    <div class="stat-block"><div class="stat-label">LEVEL</div><div class="stat-val" id="level-disp">1</div></div>
+    <div class="stat-block"><div class="stat-label">LIVES</div><div class="stat-val sm" id="lives-disp">♦♦♦</div></div>
+    <div class="stat-block"><div class="stat-label">STREAK</div><div class="stat-val" id="streak-disp">0</div></div>
+    <div class="coin-block"><div class="coin-label">⚡ COINS</div><div class="coin-val" id="coin-disp">0</div></div>
+    <div id="prog-label">PROGRESS</div>
+    <div id="prog-wrap"><div id="prog-fill"></div><div id="prog-pct">0%</div></div>
+    <button class="left-btn gold-btn" onclick="openCoinShop()" style="margin-top:8px;">💰 BUY COINS</button>
+    <button class="left-btn" onclick="openSkinShop()">🎨 SKINS</button>
+  </div>
+
+  <div id="center-panel">
+    <canvas id="c"></canvas>
+    <div id="key-row">
+      <div class="key-slot"><div class="key-box" id="key-A">A</div><div class="key-label">PORT 1</div></div>
+      <div class="key-slot"><div class="key-box" id="key-S">S</div><div class="key-label">PORT 2</div></div>
+      <div class="key-slot"><div class="key-box" id="key-J">J</div><div class="key-label">PORT 3</div></div>
+      <div class="key-slot"><div class="key-box" id="key-K">K</div><div class="key-label">PORT 4</div></div>
+    </div>
+
+    <!-- TITLE -->
+    <div class="overlay" id="title-screen" style="position:fixed;z-index:800;">
+      <div style="font-size:9px;color:var(--pd);letter-spacing:5px;margin-bottom:10px;">// EMERGENCY BROADCAST //</div>
+      <h1 style="font-size:56px;letter-spacing:6px;margin-bottom:4px;">SIGNAL<br>LOST</h1>
+      <div style="font-size:9px;color:var(--pb);letter-spacing:4px;margin-bottom:20px;">STATION BREACH PROTOCOL</div>
+      <div style="display:flex;gap:24px;margin-bottom:20px;">
+        <div style="text-align:center;border:1px solid var(--pd);padding:10px 16px;background:#0a0018;">
+          <div style="font-size:8px;color:var(--pd);letter-spacing:2px;margin-bottom:4px;">MISSION</div>
+          <div style="font-size:10px;color:var(--pb);line-height:1.8;">REROUTE POWER SURGES<br>BEFORE THEY HIT<br>THE REACTOR</div>
+        </div>
+        <div style="text-align:center;border:1px solid var(--pd);padding:10px 16px;background:#0a0018;">
+          <div style="font-size:8px;color:var(--pd);letter-spacing:2px;margin-bottom:4px;">CONTROLS</div>
+          <div style="font-size:10px;color:var(--pb);line-height:1.8;">PRESS <span style="color:#fff;font-family:Orbitron,monospace;font-size:12px;">A S J K</span><br>AS SURGES HIT<br>THE TARGET RING</div>
+        </div>
+      </div>
+      <div style="font-family:'Orbitron',monospace;font-size:13px;color:var(--pd);letter-spacing:3px;margin-bottom:20px;" id="title-hiscore">HI-SCORE: 0</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:10px;">
+        <button onclick="startGame()" style="font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:#000;background:var(--p);border:none;padding:12px 32px;cursor:pointer;letter-spacing:3px;box-shadow:0 0 24px rgba(223,0,255,0.6);animation:blink 1s step-end infinite;">▶ INITIATE BREACH</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+        <button onclick="openTutorial()" style="font-family:'Orbitron',monospace;font-size:10px;font-weight:700;color:var(--p);background:transparent;border:1px solid var(--pd);padding:9px 20px;cursor:pointer;letter-spacing:2px;">? HOW TO PLAY</button>
+        <button onclick="openCoinShop()" style="font-family:'Orbitron',monospace;font-size:10px;font-weight:700;color:#000;background:var(--gold);border:none;padding:9px 20px;cursor:pointer;letter-spacing:2px;">💰 COINS</button>
+        <button onclick="openSkinShop()" style="font-family:'Orbitron',monospace;font-size:10px;font-weight:700;color:var(--p);background:transparent;border:1px solid var(--pd);padding:9px 20px;cursor:pointer;letter-spacing:2px;">🎨 SKINS</button>
+      </div>
+      <div style="font-size:9px;color:var(--pd);letter-spacing:2px;margin-top:14px;">COINS: <span style="color:var(--gold);font-family:Orbitron,monospace;" id="title-coins">0</span></div>
+    </div>
+
+    <!-- GAME OVER -->
+    <div class="overlay" id="gameover-screen" style="display:none">
+      <h1 style="color:var(--red);text-shadow:0 0 10px #ff2255,0 0 28px rgba(255,34,85,0.4)">REACTOR<br>CRITICAL</h1>
+      <h2 id="go-score" style="color:var(--p)"></h2>
+      <div style="font-family:'Orbitron',monospace;font-size:13px;color:var(--pd);letter-spacing:2px;margin-bottom:8px;" id="go-hiscore"></div>
+      <p id="go-msg"></p>
+      <div id="continue-wrap" style="border:1px solid var(--pd);padding:12px 20px;margin-bottom:12px;text-align:center;background:#0a0018;">
+        <div style="font-size:10px;color:var(--pb);letter-spacing:2px;margin-bottom:6px;">CONTINUE FROM SECTOR <span id="continue-level"></span>?</div>
+        <div style="font-family:'Orbitron',monospace;font-size:22px;color:#fff;margin-bottom:8px;">30p</div>
+        <button class="big-btn gold" id="continue-btn" onclick="continuePurchase()">▶ CONTINUE — £0.30</button>
+      </div>
+      <button class="big-btn" onclick="startGame()">↺ RESTART</button>
+      <button class="big-btn sec" onclick="goHome()">⌂ MAIN MENU</button>
+    </div>
+
+    <!-- LEVEL COMPLETE -->
+    <div class="overlay" id="level-screen" style="display:none">
+      <h1>SECTOR<br>STABLE</h1>
+      <h2 id="lv-num"></h2>
+      <p id="lv-msg"></p>
+      <button class="big-btn blink" onclick="nextLevel()">▶ NEXT SECTOR</button>
+    </div>
+
+    <!-- TUTORIAL -->
+    <div id="tutorial-screen">
+      <h1>HOW TO PLAY</h1>
+      <div class="tut-grid">
+        <div class="tut-card"><div class="tut-title" style="color:var(--p)">YOUR MISSION</div><div class="tut-body">The reactor is overloading. Power surges fly down 4 conduits. Press the matching key as a surge hits the glowing ring to reroute it.</div></div>
+        <div class="tut-card"><div class="tut-title" style="color:var(--p)">THE KEYS</div><div class="tut-body">4 conduits — 4 keys: A S J K. Left hand covers A and S. Right hand covers J and K. Hit the key matching the conduit the surge is in.</div></div>
+        <div class="tut-card"><div class="tut-title" style="color:#ff4466">MISSING</div><div class="tut-body">Miss a surge and it hits the reactor — you lose a life. Lose all lives and the station explodes. Use the Continue button to keep going!</div></div>
+        <div class="tut-card"><div class="tut-title" style="color:#00ffee">SURGE TYPES</div><div class="tut-body">Purple = normal (15pts) · Cyan diamond = bonus (30pts) · Red X = bomb, risky but 50pts! Bombs appear from level 4.</div></div>
+        <div class="tut-card"><div class="tut-title" style="color:var(--gold)">COINS</div><div class="tut-body">Earn coins by clearing sectors. Buy more coins cheaply from the shop. Spend coins on surge skins in the Skins shop!</div></div>
+        <div class="tut-card"><div class="tut-title" style="color:#00ff88">STREAK</div><div class="tut-body">Hit 5 in a row for a x1.5 score bonus. Missing resets your streak to zero. Keep it going for massive points!</div></div>
+      </div>
+      <button class="big-btn" style="flex-shrink:0;" onclick="closeTutorial()">▶ GOT IT</button>
+    </div>
+
+    <!-- COIN SHOP -->
+    <div id="coin-shop-modal">
+      <h1>💰 COIN SHOP</h1>
+      <div class="coin-shop-sub">BUY COINS — SPEND ON SKINS</div>
+      <div class="coin-grid">
+        <div class="coin-card"><div class="coin-amount">60</div><div class="coin-bonus">starter pack</div><div class="coin-price">£0.59</div><button class="coin-buy-btn" onclick="buyCoin('coins_60',0.59,60)">BUY</button></div>
+        <div class="coin-card"><div class="coin-amount">150</div><div class="coin-bonus">+20 bonus</div><div class="coin-price">£0.79</div><button class="coin-buy-btn" onclick="buyCoin('coins_150',0.79,150)">BUY</button></div>
+        <div class="coin-card"><div class="coin-amount">320</div><div class="coin-bonus">+40 bonus</div><div class="coin-price">£0.99</div><button class="coin-buy-btn" onclick="buyCoin('coins_320',0.99,320)">BUY</button></div>
+        <div class="coin-card"><div class="coin-amount">700</div><div class="coin-bonus">+100 bonus</div><div class="coin-price">£1.99</div><button class="coin-buy-btn" onclick="buyCoin('coins_700',1.99,700)">BUY</button></div>
+        <div class="coin-card"><div class="coin-amount">1600</div><div class="coin-bonus">+400 bonus ⭐</div><div class="coin-price">£3.99</div><button class="coin-buy-btn" onclick="buyCoin('coins_1600',3.99,1600)">BUY</button></div>
+        <div class="coin-card" style="border-color:#aa8800;"><div class="coin-amount" style="font-size:16px;">MEGA<br>4000</div><div class="coin-bonus" style="color:#ffd700;">+1000 bonus 🔥</div><div class="coin-price">£7.99</div><button class="coin-buy-btn" onclick="buyCoin('coins_4000',7.99,4000)">BUY</button></div>
+      </div>
+      <button class="modal-close" onclick="closeCoinShop()">✕ CLOSE</button>
+      <div style="font-size:9px;color:#2a1800;margin-top:8px;letter-spacing:1px;">🔒 SECURE CHECKOUT VIA STRIPE</div>
+    </div>
+
+    <!-- SKIN SHOP -->
+    <div id="skin-shop-modal">
+      <h1>🎨 SKINS</h1>
+      <div class="skin-shop-sub">BUY WITH COINS — CHANGES HOW SURGES LOOK</div>
+      <div class="skin-grid" id="skin-grid"></div>
+      <div style="font-size:10px;color:var(--pb);margin-bottom:12px;">YOUR COINS: <span style="color:var(--gold);font-family:Orbitron,monospace;" id="skin-shop-coins">0</span></div>
+      <button class="modal-close" onclick="closeSkinShop()">✕ CLOSE</button>
+    </div>
+
+    <div id="flash"></div>
+  </div>
+
+  <div id="right-panel">
+    <div id="right-title">SYSTEM LOG</div>
+    <div id="alert-log"></div>
+    <div id="reactor-label">REACTOR</div>
+    <div id="reactor-wrap"><div id="reactor-fill"></div></div>
+  </div>
+</div>
+
+<script>
+const BACKEND_URL='https://YOUR-RENDER-APP.onrender.com';
+fetch(`${BACKEND_URL}/health`).catch(()=>{});
+
+// ── PLAYER DATA ──────────────────────────────────────────
+function getPlayerId(){let id=localStorage.getItem('sl2_pid');if(!id){id='sl_'+Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('sl2_pid',id);}return id;}
+const PLAYER_ID=getPlayerId();
+function getCoins(){return parseInt(localStorage.getItem('sl2_coins')||'0');}
+function setCoins(n){localStorage.setItem('sl2_coins',Math.max(0,n));document.getElementById('coin-disp').textContent=Math.max(0,n);}
+function getHiScore(){return parseInt(localStorage.getItem('sl2_hi')||'0');}
+function saveHiScore(s){if(s>getHiScore())localStorage.setItem('sl2_hi',s);}
+function updateHiDisp(){let el=document.getElementById('title-hiscore');if(el)el.textContent='HI-SCORE: '+getHiScore();}
+updateHiDisp();
+function getEquipped(){return localStorage.getItem('sl2_skin')||'default';}
+function setEquipped(s){localStorage.setItem('sl2_skin',s);}
+function getOwnedSkins(){try{return JSON.parse(localStorage.getItem('sl2_owned_skins')||'["default"]');}catch(e){return['default'];}}
+function addOwnedSkin(s){let o=getOwnedSkins();if(!o.includes(s)){o.push(s);localStorage.setItem('sl2_owned_skins',JSON.stringify(o));}}
+
+// ── SKINS DEF ────────────────────────────────────────────
+const SKINS=[
+  {id:'default',  name:'DEFAULT',   cost:0,    color:'#df00ff', style:'circle'},
+  {id:'fire',     name:'FIRE',      cost:80,   color:'#ff6600', style:'circle'},
+  {id:'ice',      name:'ICE',       cost:80,   color:'#00ddff', style:'circle'},
+  {id:'gold',     name:'GOLD',      cost:120,  color:'#ffd700', style:'circle'},
+  {id:'toxic',    name:'TOXIC',     cost:150,  color:'#44ff00', style:'circle'},
+  {id:'plasma',   name:'PLASMA',    cost:200,  color:'#ff00aa', style:'diamond'},
+  {id:'void',     name:'VOID',      cost:250,  color:'#aa44ff', style:'diamond'},
+  {id:'nova',     name:'NOVA',      cost:350,  color:'#ffffff', style:'star'},
+  {id:'inferno',  name:'INFERNO',   cost:500,  color:'#ff2200', style:'star'},
+];
+
+// ── CANVAS ───────────────────────────────────────────────
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+let W=600,H=400;
+function resizeCanvas(){let cp=document.getElementById('center-panel');W=cp.clientWidth;H=Math.max(200,cp.clientHeight-66);canvas.width=W;canvas.height=H;}
+resizeCanvas();window.addEventListener('resize',()=>{resizeCanvas();});
+
+// ── STATE ────────────────────────────────────────────────
+let state='title',score=0,level=1,lives=3,streak=0,coins=0;
+let surges=[],particles=[];
+let surgesCleared=0,surgesNeeded=12,surgeSpeed=1.8,spawnInterval=160,spawnTimer=0;
+let animId,lastTime=0,screenShake=0,reactorHealth=100;
+let bgStars=[];
+for(let i=0;i<50;i++)bgStars.push({x:Math.random(),y:Math.random(),r:Math.random()*1.3+0.3,tw:Math.random()*Math.PI*2});
+
+const LANES=[{key:'A'},{key:'S'},{key:'J'},{key:'K'}];
+const HIT_ZONE=38;
+function getLaneX(i){return Math.round(W*(i+1)/(LANES.length+1));}
+function getTargetY(){return H-50;}
+
+function initLevel(){
+  surges=[];particles=[];surgesCleared=0;
+  surgesNeeded=10+level*3;
+  surgeSpeed=1.8+level*0.25;
+  spawnInterval=Math.max(80,160-level*10);
+  spawnTimer=spawnInterval*0.6;
+  screenShake=0;reactorHealth=100;streak=0;
+  updateHUD();
+// Update title coins display
+let tcEl=document.getElementById('title-coins');
+if(tcEl) tcEl.textContent=getCoins();
+}
+
+function getSkinColor(){
+  let s=SKINS.find(x=>x.id===getEquipped())||SKINS[0];
+  return s.color;
+}
+function getSkinStyle(){
+  let s=SKINS.find(x=>x.id===getEquipped())||SKINS[0];
+  return s.style;
+}
+
+function spawnSurge(){
+  let active=surges.filter(s=>!s.hit&&!s.missed);
+  if(active.length>=2)return;
+  // Don't spawn in same lane as existing active surge
+  let usedLanes=active.map(s=>s.laneIdx);
+  let available=LANES.map((_,i)=>i).filter(i=>!usedLanes.includes(i));
+  if(available.length===0)return;
+  let i=available[Math.floor(Math.random()*available.length)];
+  let isBomb=level>=4&&Math.random()<0.1;
+  let isDouble=level>=2&&Math.random()<0.18;
+  let col=isBomb?'#ff2255':isDouble?'#00ffee':getSkinColor();
+  let sty=isBomb?'cross':isDouble?'diamond':getSkinStyle();
+  surges.push({laneIdx:i,x:getLaneX(i),y:-20,color:col,type:isBomb?'bomb':isDouble?'double':'normal',style:sty,speed:surgeSpeed+(Math.random()*0.4-0.2),hit:false,missed:false,flash:0});
+}
+
+// ── INPUT ────────────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  if(state!=='playing')return;
+  const m={KeyA:'A',KeyS:'S',KeyJ:'J',KeyK:'K'};
+  const k=m[e.code];if(!k)return;
+  e.preventDefault();pressKey(k);
+});
+
+function pressKey(k){
+  let box=document.getElementById('key-'+k);
+  if(box){box.classList.add('active');setTimeout(()=>box.classList.remove('active'),110);}
+  let best=null,bestDist=Infinity,ty=getTargetY();
+  for(let s of surges){
+    if(s.hit||s.missed)continue;
+    if(LANES[s.laneIdx].key!==k)continue;
+    let d=Math.abs(s.y-ty);
+    if(d<HIT_ZONE&&d<bestDist){best=s;bestDist=d;}
+  }
+  if(best)hitSurge(best,k);
+  else badPress(k);
+}
+
+function hitSurge(s,k){
+  s.hit=true;streak++;
+  let pts=s.type==='double'?30:s.type==='bomb'?50:15;
+  if(streak>=5)pts=Math.floor(pts*1.5);
+  score+=pts;surgesCleared++;
+  spawnBurst(s.x,getTargetY(),6,s.color);
+  let box=document.getElementById('key-'+k);
+  if(box){box.classList.add('correct');setTimeout(()=>box.classList.remove('correct'),180);}
+  addLog(s.type==='bomb'?'BOMB +'+pts:'CLEAR +'+pts,'good'); if(s.type==='bomb') sfx_bomb(); else sfx_hit();
+  if(streak===5){showFlash('5 STREAK — x1.5!'); sfx_streak();}
+  if(streak===10){showFlash('10 STREAK!! 🔥'); sfx_streak(); sfx_streak();}
+  if(surgesCleared>=surgesNeeded)triggerLevelComplete();
+  updateHUD();
+}
+
+function badPress(k){
+  streak=0;screenShake=5;
+  let box=document.getElementById('key-'+k);
+  if(box){box.classList.add('wrong');setTimeout(()=>box.classList.remove('wrong'),180);}
+  addLog('MISSED KEY','danger');updateHUD();
+}
+
+function surgeMissed(s){
+  s.missed=true;streak=0;screenShake=14;
+  spawnBurst(s.x,getTargetY(),10,'#ff2255');
+  lives--;reactorHealth=Math.max(0,reactorHealth-25);
+  addLog('REACTOR HIT','danger');showFlash('SURGE HIT REACTOR!'); sfx_miss();
+  if(lives<=0)setTimeout(gameOver,400);
+  updateHUD();
+}
+
+function spawnBurst(cx,cy,n,col){
+  for(let i=0;i<n;i++){
+    let a=Math.random()*Math.PI*2,sp=1.5+Math.random()*2.5;
+    particles.push({x:cx,y:cy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,col});
+  }
+}
+
+// ── LOOP ─────────────────────────────────────────────────
+function startGame(){
+  score=0;level=1;lives=3;streak=0;coins=getCoins();
+  let els=['title-screen','gameover-screen','level-screen'];
+  els.forEach(id=>document.getElementById(id).style.display='none');
+  state='playing';initLevel();
+  lastTime=performance.now();
+  cancelAnimationFrame(animId);
+  loop(performance.now());
+}
+
+function loop(ts){
+  animId=requestAnimationFrame(loop);
+  if(state!=='playing')return;
+  let dt=Math.min(ts-lastTime,60);lastTime=ts;
+  spawnTimer+=dt;
+  if(spawnTimer>=spawnInterval){spawnTimer=0;spawnSurge();}
+  let ty=getTargetY();
+  for(let s of surges){
+    if(s.hit||s.missed)continue;
+    s.y+=s.speed*(dt/16);
+    if(s.y>ty+44)surgeMissed(s);
+  }
+  surges=surges.filter(s=>!(s.hit&&s.flash>20)&&s.y<H+60);
+  for(let s of surges){if(s.hit)s.flash++;}
+  for(let p of particles){p.x+=p.vx*(dt/16);p.y+=p.vy*(dt/16);p.life-=dt/450;}
+  particles=particles.filter(p=>p.life>0);
+  if(screenShake>0)screenShake=Math.max(0,screenShake-dt/10);
+  // Update progress
+  let pct=Math.min(100,(surgesCleared/surgesNeeded)*100);
+  document.getElementById('prog-fill').style.height=pct+'%';
+  document.getElementById('prog-pct').textContent=Math.floor(pct)+'%';
+  let rf=document.getElementById('reactor-fill');
+  rf.style.width=reactorHealth+'%';
+  rf.style.background=reactorHealth<35?'#ff2255':reactorHealth<65?'#ffaa00':'var(--p)';
+  render(ts);
+}
+
+// ── RENDER ───────────────────────────────────────────────
+function render(ts){
+  ctx.save();
+  if(screenShake>0.5){let sh=screenShake;ctx.translate((Math.random()-0.5)*sh,(Math.random()-0.5)*sh);}
+  ctx.fillStyle='#060010';ctx.fillRect(0,0,W,H);
+  // stars
+  for(let s of bgStars){
+    let sx=(s.x*W)|0,sy=(s.y*H)|0;
+    let tw=Math.sin(ts/1000+s.tw)*0.3+0.55;
+    ctx.globalAlpha=tw*0.5;ctx.fillStyle='#df00ff';
+    ctx.fillRect(sx,sy,s.r|0,s.r|0);
+  }
+  ctx.globalAlpha=1;
+  // conduits
+  for(let i=0;i<LANES.length;i++){
+    let x=getLaneX(i);
+    ctx.fillStyle='rgba(223,0,255,0.03)';ctx.fillRect(x-36,0,72,H);
+    ctx.strokeStyle='#1a0035';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H-70);ctx.stroke();
+  }
+  // surges
+  let t=ts*0.002;
+  for(let s of surges){
+    if(s.missed)continue;
+    if(s.hit){
+      let r=s.flash*3.5;ctx.globalAlpha=Math.max(0,1-s.flash/20);
+      ctx.strokeStyle=s.color;ctx.lineWidth=2;ctx.shadowColor=s.color;ctx.shadowBlur=16;
+      ctx.beginPath();ctx.arc(s.x,s.y,r,0,Math.PI*2);ctx.stroke();
+      ctx.globalAlpha=1;ctx.shadowBlur=0;continue;
+    }
+    let pulse=Math.sin(t*3+s.laneIdx)*0.25+0.8;
+    ctx.shadowColor=s.color;ctx.shadowBlur=20;
+    if(s.style==='cross'){
+      ctx.strokeStyle=s.color;ctx.lineWidth=3;
+      ctx.beginPath();ctx.moveTo(s.x-10,s.y-10);ctx.lineTo(s.x+10,s.y+10);ctx.moveTo(s.x+10,s.y-10);ctx.lineTo(s.x-10,s.y+10);ctx.stroke();
+      ctx.strokeStyle=`rgba(255,34,85,${pulse*0.4})`;ctx.lineWidth=1;
+      ctx.beginPath();ctx.arc(s.x,s.y,17,0,Math.PI*2);ctx.stroke();
+    } else if(s.style==='diamond'){
+      ctx.fillStyle=s.color;ctx.globalAlpha=pulse;
+      ctx.beginPath();ctx.moveTo(s.x,s.y-13);ctx.lineTo(s.x+10,s.y);ctx.lineTo(s.x,s.y+13);ctx.lineTo(s.x-10,s.y);ctx.closePath();ctx.fill();
+      ctx.globalAlpha=1;
+    } else if(s.style==='star'){
+      ctx.strokeStyle=s.color;ctx.lineWidth=2;
+      for(let i=0;i<5;i++){let a=i/5*Math.PI*2-Math.PI/2;let a2=a+Math.PI/5;ctx.beginPath();ctx.moveTo(s.x+Math.cos(a)*13,s.y+Math.sin(a)*13);ctx.lineTo(s.x+Math.cos(a2)*6,s.y+Math.sin(a2)*6);ctx.stroke();}
+    } else {
+      ctx.fillStyle=s.color;ctx.globalAlpha=pulse;
+      ctx.beginPath();ctx.arc(s.x,s.y,12,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+      ctx.strokeStyle='rgba(255,255,255,0.9)';ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.moveTo(s.x+3,s.y-7);ctx.lineTo(s.x-2,s.y);ctx.lineTo(s.x+3,s.y);ctx.lineTo(s.x-3,s.y+7);ctx.stroke();
+    }
+    ctx.shadowBlur=0;
+    ctx.strokeStyle=s.color+'44';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(s.x,s.y-15);ctx.lineTo(s.x,s.y-35);ctx.stroke();
+  }
+  // particles
+  for(let p of particles){
+    ctx.globalAlpha=p.life;ctx.fillStyle=p.col;
+    ctx.fillRect((p.x-2)|0,(p.y-2)|0,4,4);
+  }
+  ctx.globalAlpha=1;
+  // target zones
+  for(let i=0;i<LANES.length;i++){
+    let x=getLaneX(i),ty=getTargetY();
+    let pulse=Math.sin(t*2+i)*0.3+0.6;
+    ctx.strokeStyle=`rgba(223,0,255,${pulse*0.6})`;ctx.lineWidth=2;
+    ctx.shadowColor='#df00ff';ctx.shadowBlur=12;
+    ctx.beginPath();ctx.arc(x,ty,22+pulse*2,0,Math.PI*2);ctx.stroke();
+    ctx.shadowBlur=0;
+    ctx.fillStyle=`rgba(223,0,255,${pulse*0.1})`;
+    ctx.beginPath();ctx.arc(x,ty,22,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(100,0,160,0.8)';
+    ctx.font='bold 13px Orbitron,monospace';ctx.textAlign='center';
+    ctx.fillText(LANES[i].key,x,ty+5);
+  }
+  ctx.restore();
+}
+
+// ── HUD ──────────────────────────────────────────────────
+function updateHUD(){
+  document.getElementById('score-disp').textContent=score;
+  document.getElementById('level-disp').textContent=level;
+  document.getElementById('lives-disp').textContent='♦'.repeat(Math.max(0,lives));
+  document.getElementById('streak-disp').textContent=streak;
+  document.getElementById('coin-disp').textContent=getCoins();
+}
+
+// ── LEVEL / GAME OVER ────────────────────────────────────
+function triggerLevelComplete(){
+  state='levelcomplete';
+  let coinsEarned=10+level*5;
+  setCoins(getCoins()+coinsEarned);
+  score+=level*300;
+  saveHiScore(score);updateHiDisp();
+  cancelAnimationFrame(animId);
+  sfx_levelcomplete();
+  document.getElementById('lv-num').textContent='SECTOR '+level+' STABLE';
+  document.getElementById('lv-msg').innerHTML='SCORE: '+score+'<br>+'+coinsEarned+' COINS EARNED<br><br>SURGE INTENSITY INCREASING...';
+  document.getElementById('level-screen').style.display='flex';
+  addLog('+'+coinsEarned+' COINS EARNED','gold');
+  updateHUD();
+}
+
+function nextLevel(){
+  level++;
+  document.getElementById('level-screen').style.display='none';
+  state='playing';initLevel();
+  lastTime=performance.now();loop(performance.now());
+}
+
+function gameOver(){
+  state='gameover'; sfx_gameover(); cancelAnimationFrame(animId);
+  saveHiScore(score);updateHiDisp();
+  document.getElementById('go-score').textContent='FINAL SCORE: '+score;
+  let hi=getHiScore();
+  document.getElementById('go-hiscore').textContent=score>=hi?'★ NEW HI-SCORE! ★':'HI-SCORE: '+hi;
+  document.getElementById('go-msg').innerHTML='SECTOR: '+level;
+  document.getElementById('continue-level').textContent=level;
+  document.getElementById('gameover-screen').style.display='flex';
+}
+
+function goHome(){
+  cancelAnimationFrame(animId);state='title';
+  ['gameover-screen','level-screen'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('title-screen').style.display='flex';
+  updateHiDisp();
+}
+
+// ── CONTINUE ─────────────────────────────────────────────
+async function continuePurchase(){
+  try{
+    showFlash('CONNECTING TO STRIPE...');
+    const res=await fetch(`${BACKEND_URL}/create-checkout-session`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item:'continue',price:0.30,playerId:PLAYER_ID})});
+    const data=await res.json();
+    if(data.url)window.location.href=data.url;
+    else showFlash('ERROR — TRY AGAIN');
+  }catch(e){showFlash('CONNECTION ERROR');console.error(e);}
+}
+
+// ── COIN PURCHASE ────────────────────────────────────────
+async function buyCoin(item,price,amount){
+  try{
+    showFlash('CONNECTING TO STRIPE...');
+    const res=await fetch(`${BACKEND_URL}/create-checkout-session`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item,price,playerId:PLAYER_ID,coinAmount:amount})});
+    const data=await res.json();
+    if(data.url)window.location.href=data.url;
+    else showFlash('ERROR — TRY AGAIN');
+  }catch(e){showFlash('CONNECTION ERROR');console.error(e);}
+}
+
+// ── SKIN SHOP ────────────────────────────────────────────
+function renderSkinGrid(){
+  let owned=getOwnedSkins();
+  let equipped=getEquipped();
+  let c=getCoins();
+  document.getElementById('skin-shop-coins').textContent=c;
+  let grid=document.getElementById('skin-grid');
+  grid.innerHTML=SKINS.map(sk=>{
+    let isOwned=owned.includes(sk.id);
+    let isEquipped=equipped===sk.id;
+    let canAfford=c>=sk.cost;
+    let preview=renderSkinPreviewSVG(sk);
+    let btn=isEquipped
+      ? `<button class="skin-action-btn equipped-btn" disabled>EQUIPPED</button>`
+      : isOwned
+        ? `<button class="skin-action-btn equip" onclick="equipSkin('${sk.id}')">EQUIP</button>`
+        : `<button class="skin-action-btn" ${canAfford?'':'style="opacity:0.4;cursor:not-allowed;"'} onclick="${canAfford?`buySkin('${sk.id}')`:''}">${sk.cost===0?'FREE':sk.cost+' COINS'}</button>`;
+    return `<div class="skin-card ${isEquipped?'equipped':isOwned?'owned':''}" style="border-color:${isEquipped?'#fff':isOwned?sk.color:''}">${preview}<div class="skin-name">${sk.name}</div><div class="skin-cost">${sk.cost===0?'FREE':sk.cost+' ⚡'}</div>${btn}</div>`;
+  }).join('');
+}
+
+function renderSkinPreviewSVG(sk){
+  let c=sk.color;
+  // Make a hex color with 33% opacity for glow fill
+  let c44=c+'44';
+  switch(sk.id){
+    case 'default':
+      return `<svg width="50" height="50" viewBox="-25 -25 50 50"><circle cx="0" cy="0" r="18" fill="${c}" opacity="0.15"/><circle cx="0" cy="0" r="13" fill="${c}" opacity="0.9"/><circle cx="0" cy="0" r="13" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.4"/><polygon points="3,-8 -2,0 3,0 -3,8" fill="white" opacity="0.9"/></svg>`;
+    case 'fire':
+      return `<svg width="50" height="50" viewBox="-25 -25 50 50"><circle cx="0" cy="0" r="18" fill="${c}" opacity="0.15"/><circle cx="0" cy="0" r="13" fill="${c}"/><ellipse cx="0" cy="-4" rx="5" ry="9" fill="#ffdd00" opacity="0.8"/><ellipse cx="0" cy="-6" rx="3" ry="6" fill="#fff" opacity="0.6"/><circle cx="0" cy="0" r="13" fill="none" stroke="#ff8800" stroke-width="1.5"/></svg>`;
+    case 'ice':
+      return `<svg width="50" height="50" viewBox="-25 -25 50 50"><circle cx="0" cy="0" r="18" fill="${c}" opacity="0.12"/><circle cx="0" cy="0" r="13" fill="${c}" opacity="0.85"/><line x1="0" y1="-11" x2="0" y2="11" stroke="white" stroke-width="1.5" opacity="0.8"/><line x1="-11" y1="0" x2="11" y2="0" stroke="white" stroke-width="1.5" opacity="0.8"/><line x1="-8" y1="-8" x2="8" y2="8" stroke="white" stroke-width="1" opacity="0.5"/><line x1="8" y1="-8" x2="-8" y2="8" stroke="white" stroke-width="1" opacity="0.5"/><circle cx="0" cy="0" r="3" fill="white" opacity="0.9"/></svg>`;
+    case 'gold':
+      return `<svg width="50" height="50" viewBox="-25 -25 50 50"><circle cx="0" cy="0" r="20" fill="${c}" opacity="0.12"/><polygon points="0,-15 4,-5 14,-5 6,1 9,12 0,6 -9,12 -6,1 -14,-5 -4,-5" fill="${c}"/><polygon points="0,-10 2,-4 8,-4 3,0 5,7 0,3 -5,7 -3,0 -8,-4 -2,-4" fill="white" opacity="0.5"/></svg>`;
+    case 'toxic':
+      return `<svg width="50" height="50" viewBox="-25 -25 50 50"><circle cx="0" cy="0" r="18" fill="${c}" opacity="0.1"/><circle cx="0" cy="0" r="13" fill="${c}" opacity="0.8"/><circle cx="0" cy="0" r="8" fill="black" opacity="0.5"/><circle cx="0" cy="0" r="4" fill="${c}"/><circle cx="0" cy="-9" r="2.5" fill="${c}"/><circle cx="8" cy="5" r="2.5" fill="${c}"/><circle cx="-8" cy="5" r="2.5" fill="${c}"/></svg>`;
+    case 'plasma':
+      return `<svg width="50" height="50" viewBox="-25 -25 50 50"><circle cx="0" cy="0" r="18" fill="${c}" opacity="0.15"/><polygon points="0,-16 9,0 0,16 -9,0" fill="${c}" opacity="0.9"/><polygon points="0,-10 5,0 0,10 -5,0" fill="white" opacity="0.5"/><polygon points="0,-16 9,0 0,16 -9,0" fill="none" stroke="white" stroke-width="1"/></svg>`;
+    case 'void':
+      return `<svg width="50" height="50" viewBox="-25 -25 50 50"><circle cx="0" cy="0" r="18" fill="${c}" opacity="0.08"/><circle cx="0" cy="0" r="14" fill="none" stroke="${c}" stroke-width="2"/><circle cx="0" cy="0" r="9" fill="none" stroke="${c}" stroke-width="1.5" opacity="0.7"/><circle cx="0" cy="0" r="4" fill="${c}"/><line x1="-14" y1="0" x2="-9" y2="0" stroke="${c}" stroke-width="1.5"/><line x1="9" y1="0" x2="14" y2="0" stroke="${c}" stroke-width="1.5"/><line x1="0" y1="-14" x2="0" y2="-9" stroke="${c}" stroke-width="1.5"/><line x1="0" y1="9" x2="0" y2="14" stroke="${c}" stroke-width="1.5"/></svg>`;
+    case 'nova':
+      return `<svg width="50" height="50" viewBox="-25 -25 50 50"><circle cx="0" cy="0" r="20" fill="${c}" opacity="0.08"/><circle cx="0" cy="0" r="6" fill="${c}"/>${[0,1,2,3,4,5,6,7].map(i=>{let a=i/8*Math.PI*2;let r1=9,r2=16;return `<line x1="${Math.cos(a)*r1}" y1="${Math.sin(a)*r1}" x2="${Math.cos(a)*r2}" y2="${Math.sin(a)*r2}" stroke="${c}" stroke-width="${i%2===0?2:1}" opacity="${i%2===0?1:0.5}"/>`}).join('')}</svg>`;
+    case 'inferno':
+      return `<svg width="50" height="50" viewBox="-25 -25 50 50"><circle cx="0" cy="0" r="19" fill="${c}" opacity="0.15"/><circle cx="0" cy="0" r="13" fill="${c}"/><circle cx="0" cy="0" r="8" fill="#ff6600"/><circle cx="0" cy="0" r="4" fill="#ffdd00"/><circle cx="0" cy="0" r="1.5" fill="white"/>${[0,1,2,3,4,5].map(i=>{let a=i/6*Math.PI*2;let r=16;return `<circle cx="${Math.cos(a)*r}" cy="${Math.sin(a)*r}" r="2" fill="${c}" opacity="0.7"/>`}).join('')}</svg>`;
+    default:
+      return `<svg width="50" height="50" viewBox="-25 -25 50 50"><circle cx="0" cy="0" r="13" fill="${c}" opacity="0.9"/></svg>`;
+  }
+}
+
+function equipSkin(id){setEquipped(id);renderSkinGrid();showFlash('SKIN EQUIPPED!');}
+function buySkin(id){
+  let sk=SKINS.find(x=>x.id===id);if(!sk)return;
+  let c=getCoins();
+  if(c<sk.cost){showFlash('NOT ENOUGH COINS!');return;}
+  setCoins(c-sk.cost);addOwnedSkin(id);setEquipped(id);
+  renderSkinGrid();showFlash(sk.name+' SKIN UNLOCKED!');
+  updateHUD();
+}
+
+// ── MODALS ───────────────────────────────────────────────
+function openTutorial(){document.getElementById('title-screen').style.display='none';document.getElementById('tutorial-screen').style.display='flex';}
+function closeTutorial(){document.getElementById('tutorial-screen').style.display='none';document.getElementById('title-screen').style.display='flex';}
+function openCoinShop(){document.getElementById('coin-shop-modal').style.display='flex';}
+function closeCoinShop(){document.getElementById('coin-shop-modal').style.display='none';}
+function openSkinShop(){renderSkinGrid();document.getElementById('skin-shop-modal').style.display='flex';}
+function closeSkinShop(){document.getElementById('skin-shop-modal').style.display='none';}
+
+// ── LOG ──────────────────────────────────────────────────
+let logEntries=[];
+function addLog(msg,type=''){logEntries.unshift({msg,type});if(logEntries.length>7)logEntries.pop();document.getElementById('alert-log').innerHTML=logEntries.map(e=>`<div class="alert-entry ${e.type}">${e.msg}</div>`).join('');}
+
+// ── FLASH ────────────────────────────────────────────────
+let flashTout;
+function showFlash(msg){let el=document.getElementById('flash');el.textContent=msg;el.style.opacity=1;clearTimeout(flashTout);flashTout=setTimeout(()=>el.style.opacity=0,1400);}
+
+// ── STRIPE RETURN ────────────────────────────────────────
+const urlP=new URLSearchParams(window.location.search);
+if(urlP.get('success')==='true'){
+  const item=urlP.get('item');
+  const pid=urlP.get('playerId')||PLAYER_ID;
+  const ca=parseInt(urlP.get('coinAmount')||'0');
+  if(ca>0){setCoins(getCoins()+ca);showFlash('+'+ca+' COINS ADDED!');}
+  if(item==='continue'){
+    // Restore game state for continue
+    lives=3;state='playing';
+    document.getElementById('gameover-screen').style.display='none';
+    showFlash('STATION RESTORED — CONTINUE!');
+    initLevel();lastTime=performance.now();
+    cancelAnimationFrame(animId);loop(performance.now());
+  }
+  fetch(`${BACKEND_URL}/save-purchase`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({playerId:pid,item,game:'signal-lost-2'})}).catch(()=>{});
+  window.history.replaceState({},'',window.location.pathname);
+}
+if(urlP.get('cancelled')==='true'){showFlash('PURCHASE CANCELLED');window.history.replaceState({},'',window.location.pathname);}
+
+// ── TOUCH ────────────────────────────────────────────────
+
+// ─── SOUND ENGINE ─────────────────────────────────────────
+const AC = new (window.AudioContext || window.webkitAudioContext)();
+function resumeAC(){ if(AC.state==='suspended') AC.resume(); }
+document.addEventListener('keydown', resumeAC, {once:true});
+document.addEventListener('click', resumeAC, {once:true});
+
+function beep(freq, type, duration, vol, fade){
+  try{
+    let o=AC.createOscillator(), g=AC.createGain();
+    o.connect(g); g.connect(AC.destination);
+    o.type=type||'square';
+    o.frequency.setValueAtTime(freq, AC.currentTime);
+    g.gain.setValueAtTime(vol||0.15, AC.currentTime);
+    if(fade) g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime+duration);
+    o.start(); o.stop(AC.currentTime+duration);
+  }catch(e){}
+}
+
+function sfx_hit(){
+  beep(520,'square',0.06,0.15,true);
+  setTimeout(()=>beep(780,'square',0.05,0.12,true),50);
+}
+function sfx_bomb(){ 
+  beep(800,'square',0.04,0.2,true);
+  setTimeout(()=>beep(1200,'square',0.06,0.2,true),40);
+  setTimeout(()=>beep(1600,'square',0.08,0.18,true),80);
+}
+function sfx_miss(){
+  beep(280,'sawtooth',0.08,0.2,false);
+  setTimeout(()=>beep(180,'sawtooth',0.1,0.2,true),100);
+}
+function sfx_levelcomplete(){
+  [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,'square',0.12,0.18,true),i*100));
+}
+function sfx_streak(){
+  [700,900,1100,1400].forEach((f,i)=>setTimeout(()=>beep(f,'square',0.06,0.15,true),i*65));
+}
+function sfx_gameover(){
+  [350,280,210,160,120].forEach((f,i)=>setTimeout(()=>beep(f,'sawtooth',0.15,0.22,true),i*110));
+}
+
+canvas.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  let rect=canvas.getBoundingClientRect();
+  let tx=(e.touches[0].clientX-rect.left)*(W/rect.width);
+  let best=null,bestDist=Infinity;
+  for(let i=0;i<LANES.length;i++){let d=Math.abs(tx-getLaneX(i));if(d<bestDist){bestDist=d;best=LANES[i];}}
+  if(best&&state==='playing')pressKey(best.key);
+},{passive:false});
+
+updateHUD();
+</script>
+</body>
+</html>
