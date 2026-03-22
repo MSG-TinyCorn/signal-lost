@@ -697,14 +697,14 @@ document.addEventListener('touchstart', ()=>getAC());
 
 function beep(freq, type, duration, vol, fade){
   try{
-    let AC=getAC();
-    let o=AC.createOscillator(), g=AC.createGain();
-    o.connect(g); g.connect(AC.destination);
+    let ctx=getAC();
+    let o=ctx.createOscillator(), g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
     o.type=type||'square';
-    o.frequency.setValueAtTime(freq, AC.currentTime);
-    g.gain.setValueAtTime(vol||0.15, AC.currentTime);
-    if(fade) g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime+duration);
-    o.start(); o.stop(AC.currentTime+duration);
+    o.frequency.setValueAtTime(freq, ctx.currentTime);
+    g.gain.setValueAtTime(vol||0.15, ctx.currentTime);
+    if(fade) g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+duration);
+    o.start(); o.stop(ctx.currentTime+duration);
   }catch(e){}
 }
 
