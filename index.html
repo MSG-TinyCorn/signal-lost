@@ -687,12 +687,13 @@ if(urlP.get('cancelled')==='true'){showFlash('PURCHASE CANCELLED');window.histor
 let AC = null;
 function getAC() {
   if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
-  if (AC.state === 'suspended') AC.resume();
+  if (AC.state !== 'running') AC.resume();
   return AC;
 }
-// Warm up audio on first click
-document.addEventListener('click', getAC, {once: true});
-document.addEventListener('keydown', getAC, {once: true});
+// Resume on EVERY interaction — not just first
+document.addEventListener('click', ()=>getAC());
+document.addEventListener('keydown', ()=>getAC());
+document.addEventListener('touchstart', ()=>getAC());
 
 function beep(freq, type, duration, vol, fade){
   try{
