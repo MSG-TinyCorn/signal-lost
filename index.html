@@ -193,7 +193,7 @@ canvas{display:block;width:100%;flex:1;}
     </div>
 
     <!-- TUTORIAL -->
-    <div id="tutorial-screen">
+    <div id="tutorial-screen" style="position:fixed;z-index:800;">
       <h1>HOW TO PLAY</h1>
       <div class="tut-grid">
         <div class="tut-card"><div class="tut-title" style="color:var(--p)">YOUR MISSION</div><div class="tut-body">The reactor is overloading. Power surges fly down 4 conduits. Press the matching key as a surge hits the glowing ring to reroute it.</div></div>
@@ -207,7 +207,7 @@ canvas{display:block;width:100%;flex:1;}
     </div>
 
     <!-- COIN SHOP -->
-    <div id="coin-shop-modal">
+    <div id="coin-shop-modal" style="position:fixed;z-index:900;">
       <h1>💰 COIN SHOP</h1>
       <div class="coin-shop-sub">BUY COINS — SPEND ON SKINS</div>
       <div class="coin-grid">
@@ -223,7 +223,7 @@ canvas{display:block;width:100%;flex:1;}
     </div>
 
     <!-- SKIN SHOP -->
-    <div id="skin-shop-modal">
+    <div id="skin-shop-modal" style="position:fixed;z-index:900;">
       <h1>🎨 SKINS</h1>
       <div class="skin-shop-sub">BUY WITH COINS — CHANGES HOW SURGES LOOK</div>
       <div class="skin-grid" id="skin-grid"></div>
@@ -684,19 +684,19 @@ if(urlP.get('cancelled')==='true'){showFlash('PURCHASE CANCELLED');window.histor
 // ── TOUCH ────────────────────────────────────────────────
 
 // ─── SOUND ENGINE ─────────────────────────────────────────
-const AC = new (window.AudioContext || window.webkitAudioContext)();
-function resumeAC(){
-  if(AC.state==='suspended'||AC.state==='interrupted') AC.resume();
+let AC = null;
+function getAC() {
+  if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
+  if (AC.state === 'suspended') AC.resume();
+  return AC;
 }
-// Resume on ANY interaction immediately
-['keydown','mousedown','touchstart','pointerdown'].forEach(ev=>{
-  document.addEventListener(ev, resumeAC);
-});
-// Also try to resume right away
-resumeAC();
+// Warm up audio on first click
+document.addEventListener('click', getAC, {once: true});
+document.addEventListener('keydown', getAC, {once: true});
 
 function beep(freq, type, duration, vol, fade){
   try{
+    let AC=getAC();
     let o=AC.createOscillator(), g=AC.createGain();
     o.connect(g); g.connect(AC.destination);
     o.type=type||'square';
