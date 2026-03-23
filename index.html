@@ -114,6 +114,34 @@ canvas{display:block;width:100%;flex:1;}
 .skin-action-btn.equip{background:var(--pb);}
 .skin-action-btn.equipped-btn{background:#333;color:#666;cursor:default;}
 
+/* MOBILE KEY BUTTONS */
+#mobile-keys {
+  display:none;
+  position:fixed;
+  bottom:70px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:800;
+  display:flex;
+  gap:12px;
+}
+.mob-key {
+  width:64px;height:64px;
+  background:rgba(223,0,255,0.15);
+  border:2px solid #4a0080;
+  color:#df00ff;
+  font-family:'Orbitron',monospace;
+  font-size:22px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+  border-radius:4px;
+  -webkit-tap-highlight-color:transparent;
+  clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);
+}
+.mob-key:active { background:rgba(223,0,255,0.5);border-color:#df00ff;box-shadow:0 0 16px #df00ff; }
+@media (min-width:701px) { #mobile-keys { display:none !important; } }
+@media (max-width:700px) { #mobile-keys { display:flex; } #key-row { display:none; } }
+
 #flash{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:var(--p);color:#000;font-family:'Orbitron',monospace;font-size:11px;font-weight:700;padding:5px 18px;letter-spacing:2px;z-index:700;pointer-events:none;opacity:0;transition:opacity 0.2s;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);white-space:nowrap;}
 </style>
 </head>
@@ -243,7 +271,7 @@ canvas{display:block;width:100%;flex:1;}
 </div>
 
 <script>
-const BACKEND_URL='https://grid-crawler-backend.onrender.com';
+const BACKEND_URL='https://YOUR-RENDER-APP.onrender.com';
 fetch(`${BACKEND_URL}/health`).catch(()=>{});
 
 // ── PLAYER DATA ──────────────────────────────────────────
@@ -741,5 +769,11 @@ canvas.addEventListener('touchstart',e=>{
 
 updateHUD();
 </script>
+<div id="mobile-keys" style="display:none;">
+  <div class="mob-key" ontouchstart="pressKey('A')">A</div>
+  <div class="mob-key" ontouchstart="pressKey('S')">S</div>
+  <div class="mob-key" ontouchstart="pressKey('J')">J</div>
+  <div class="mob-key" ontouchstart="pressKey('K')">K</div>
+</div>
 </body>
 </html>
